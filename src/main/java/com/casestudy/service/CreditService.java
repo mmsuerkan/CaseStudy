@@ -21,6 +21,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -110,5 +111,37 @@ public class CreditService {
             installmentResponses.add(installmentResponse);
         }
         responseDto.setInstallments(installmentResponses);
+    }
+
+    public List<CreditResponseDto> listCredits(Integer userId) {
+        User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(() -> new UserNotFoundException("User not found"));
+        Optional<List<Credit>> credits = creditRepository.findByUserId(user.getId());
+        return mapCreditsToCreditResponseDtos(credits.get());
+    }
+
+    private List<CreditResponseDto> mapCreditsToCreditResponseDtos(List<Credit> credits) {
+        List<CreditResponseDto> responseDtos = new ArrayList<>();
+        for (Credit credit : credits) {
+            CreditResponseDto responseDto = new CreditResponseDto();
+            responseDto.setCreditId(credit.getId());
+            responseDto.setStatus(credit.getStatus() == 1 ? "ACTIVE" : "CLOSED");
+            responseDto.setAmount(credit.getAmount());
+            responseDto.setInstallments(mapInstallmentsToInstallmentResponses(credit.getInstallments()));
+            responseDtos.add(responseDto);
+        }
+        return responseDtos;
+    }
+
+    private List<InstallmentResponse> mapInstallmentsToInstallmentResponses(List<Installment> installments) {
+        List<InstallmentResponse> installmentResponses = new ArrayList<>();
+        for (Installment installment : installments) {
+            InstallmentResponse installmentResponse = new InstallmentResponse();
+            installmentResponse.setId(installment.getId());
+            installmentResponse.setAmount(installment.getAmount());
+            installmentResponse.setDueDate(installment.getDueDate());
+            installmentResponse.setStatus(installment.getStatus() == 1 ? "ACTIVE" : "CLOSED");
+            installmentResponses.add(installmentResponse);
+        }
+        return installmentResponses;
     }
 }
