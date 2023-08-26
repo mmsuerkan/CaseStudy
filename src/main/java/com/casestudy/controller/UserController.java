@@ -2,6 +2,8 @@ package com.casestudy.controller;
 
 import com.casestudy.dto.user.UserRequestDto;
 import com.casestudy.dto.user.UserResponseDto;
+import com.casestudy.service.FirstAndLastNameNotEmptyException;
+import com.casestudy.service.UserAlreadyExistException;
 import com.casestudy.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,7 @@ public class UserController {
 
     private final UserService userService;
     @PostMapping("/create")
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userRequestDto) throws UserAlreadyExistException, FirstAndLastNameNotEmptyException {
         UserResponseDto responseDto = userService.createUser(userRequestDto);
         return ResponseEntity.ok(responseDto);
     }

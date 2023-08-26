@@ -16,7 +16,17 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserResponseDto createUser(UserRequestDto userRequestDto) {
+    public UserResponseDto createUser(UserRequestDto userRequestDto) throws FirstAndLastNameNotEmptyException, UserAlreadyExistException {
+
+        if(userRequestDto.getFirstName().isEmpty() || userRequestDto.getLastName().isEmpty()) {
+            throw new FirstAndLastNameNotEmptyException("First name and last name cannot be empty");
+        }
+
+        //user already exists
+        if(userRepository.findByFirstNameAndLastName(userRequestDto.getFirstName(), userRequestDto.getLastName()).isPresent()) {
+            throw new UserAlreadyExistException("User already exists");
+        }
+
         User newUser = new User();
         newUser.setFirstName(userRequestDto.getFirstName());
         newUser.setLastName(userRequestDto.getLastName());

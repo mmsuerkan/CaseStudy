@@ -5,6 +5,9 @@ import com.casestudy.dto.credit.CreditResponseDto;
 import com.casestudy.dto.installment.InstallmentResponse;
 import com.casestudy.enums.CreditStatus;
 import com.casestudy.enums.InstallmentStatus;
+import com.casestudy.exception.CreditNotFoundException;
+import com.casestudy.exception.InstallmentAlreadyPaidException;
+import com.casestudy.exception.InstallmentNotFoundException;
 import com.casestudy.repository.CreditRepository;
 import com.casestudy.repository.InstallmentRepository;
 import com.casestudy.exception.UserNotFoundException;
@@ -105,7 +108,7 @@ public class CreditService {
 
             installmentResponse.setId(installment.getId());
             installmentResponse.setDueDate(installment.getDueDate());
-            installmentResponse.setAmount(installment.getAmount());
+            installmentResponse.setAmount(BigDecimal.valueOf(installment.getAmount().longValue()));
             installmentResponse.setStatus(installment.getStatus() == 1 ? "ACTIVE" : "CLOSED");
 
             installmentResponses.add(installmentResponse);
@@ -137,11 +140,12 @@ public class CreditService {
         for (Installment installment : installments) {
             InstallmentResponse installmentResponse = new InstallmentResponse();
             installmentResponse.setId(installment.getId());
-            installmentResponse.setAmount(installment.getAmount());
+            installmentResponse.setAmount(BigDecimal.valueOf(installment.getAmount().longValue()));
             installmentResponse.setDueDate(installment.getDueDate());
             installmentResponse.setStatus(installment.getStatus() == 1 ? "ACTIVE" : "CLOSED");
             installmentResponses.add(installmentResponse);
         }
         return installmentResponses;
     }
+
 }
