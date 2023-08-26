@@ -1,0 +1,21 @@
+package com.casestudy.controller;
+
+import com.casestudy.dto.credit.CreditRequestDto;
+import com.casestudy.dto.credit.CreditResponseDto;
+import com.casestudy.service.CreditService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/credits")
+@RequiredArgsConstructor
+public class CreditController {
+
+    private final CreditService creditService;
+    @PostMapping("/create")
+    public ResponseEntity<CreditResponseDto> createCredit(@RequestBody CreditRequestDto creditRequestDto) {
+        CreditResponseDto responseDto = creditService.createCredit(creditRequestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+}
