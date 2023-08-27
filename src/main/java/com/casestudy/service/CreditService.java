@@ -5,9 +5,6 @@ import com.casestudy.dto.credit.CreditResponseDto;
 import com.casestudy.dto.installment.InstallmentResponse;
 import com.casestudy.enums.CreditStatus;
 import com.casestudy.enums.InstallmentStatus;
-import com.casestudy.exception.CreditNotFoundException;
-import com.casestudy.exception.InstallmentAlreadyPaidException;
-import com.casestudy.exception.InstallmentNotFoundException;
 import com.casestudy.repository.CreditRepository;
 import com.casestudy.repository.InstallmentRepository;
 import com.casestudy.exception.UserNotFoundException;
@@ -16,6 +13,9 @@ import com.casestudy.model.Installment;
 import com.casestudy.model.User;
 import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,15 +34,22 @@ public class CreditService {
     private final CreditRepository creditRepository;
     private final InstallmentRepository installmentRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(CreditService.class);
+
     public CreditResponseDto createCredit(CreditRequestDto creditRequest) {
 
-        User user = userRepository.findById(Long.valueOf(creditRequest.getUserId()))
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        Optional<User> user = userRepository.findById(Long.valueOf(creditRequest.getUserId()));
+
+        if(user.isEmpty()){
+            logger.atError().log("User not found");
+            throw new UserNotFoundException("User not found");
+        }
 
         Credit credit = new Credit();
         credit.setStatus(CreditStatus.ACTIVE.ordinal());
         credit.setAmount(creditRequest.getAmount());
-        credit.setUser(user);
+        credit.setCreatedAt(LocalDate.now());
+        credit.setUser(user.get());
 
         Credit savedCredit = creditRepository.save(credit);
 
@@ -94,6 +101,8 @@ public class CreditService {
     private CreditResponseDto buildCreditResponse(Credit credit, List<Installment> installments) {
         CreditResponseDto response = new CreditResponseDto();
         response.setCreditId(credit.getId());
+        response.setStatus(CreditStatus.ACTIVE.name());
+        response.setAmount(credit.getAmount());
 
         mapInstallments(response, installments);
 
@@ -115,11 +124,23 @@ public class CreditService {
         }
         responseDto.setInstallments(installmentResponses);
     }
-
+    @Cacheable("myCache")
     public List<CreditResponseDto> listCredits(Integer userId) {
         User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(() -> new UserNotFoundException("User not found"));
         Optional<List<Credit>> credits = creditRepository.findByUserId(user.getId());
+
+        checkAllCreditsIfClosed(credits);
+
         return mapCreditsToCreditResponseDtos(credits.get());
+    }
+
+    private void checkAllCreditsIfClosed(Optional<List<Credit>> credits) {
+        for (int i = 0; i < credits.get().size(); i++) {
+            if (checkIsCreditClosed(credits.get().get(i))) {
+                credits.get().get(i).setStatus(CreditStatus.CLOSED.ordinal());
+                creditRepository.save(credits.get().get(i));
+            }
+        }
     }
 
     private List<CreditResponseDto> mapCreditsToCreditResponseDtos(List<Credit> credits) {
@@ -127,12 +148,18 @@ public class CreditService {
         for (Credit credit : credits) {
             CreditResponseDto responseDto = new CreditResponseDto();
             responseDto.setCreditId(credit.getId());
-            responseDto.setStatus(credit.getStatus() == 1 ? "ACTIVE" : "CLOSED");
             responseDto.setAmount(credit.getAmount());
             responseDto.setInstallments(mapInstallmentsToInstallmentResponses(credit.getInstallments()));
+            responseDto.setStatus(checkIsCreditClosed(credit) ? "ACTIVE" : "CLOSED");
             responseDtos.add(responseDto);
         }
         return responseDtos;
+    }
+
+    private boolean checkIsCreditClosed(Credit credit) {
+
+        //set all credit to 0
+        return credit.getInstallments().stream().allMatch(installment -> installment.getStatus() == 1);
     }
 
     private List<InstallmentResponse> mapInstallmentsToInstallmentResponses(List<Installment> installments) {
@@ -148,4 +175,20 @@ public class CreditService {
         return installmentResponses;
     }
 
+    public List<Credit> findAllCredits() {
+        return creditRepository.findAll();
+    }
+
+    public List<CreditResponseDto> listFilteredAndPaginatedCredits(String status, LocalDate date) {
+
+        if(status.equals("ACTIVE"))
+            status = "0";
+        else if(status.equals("CLOSED"))
+            status = "1";
+        else
+            status = null;
+
+        Integer statusInt = Integer.valueOf(status == null ? "1" : status);
+        return mapCreditsToCreditResponseDtos(creditRepository.findByStatusAndCreatedAtGreaterThanEqual(statusInt, date));
+    }
 }

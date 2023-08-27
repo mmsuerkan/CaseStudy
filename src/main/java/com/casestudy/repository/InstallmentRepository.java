@@ -15,5 +15,9 @@ public interface InstallmentRepository extends JpaRepository<Installment, Long>{
 
     List<Installment> findByCreditAndStatus(Credit credit, Integer status);
 
+    List<Installment> findByCreditId(Integer id);
+
+
+
 
 }
