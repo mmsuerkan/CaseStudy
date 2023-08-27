@@ -1,5 +1,5 @@
 # CaseStudy
 
 COMMANDS ARE : 
- mvn clean install
+ mvn clean install \n
  docker-compose up -d
