@@ -12,7 +12,7 @@ public class ScheduledTasks {
 
    // private final LatePaymentService latePaymentService;
 
-    @Scheduled(fixedRate = 1000) // Her saat başında çalışır
+    @Scheduled(fixedRate = 1000 * 60 * 60) // Her saat başında çalışır
     public void runLatePaymentCalculation() {
         System.out.println("Late payment calculation is running");
         //latePaymentService.calculateLatePaymentInterest();

@@ -16,6 +16,9 @@ import com.casestudy.model.Installment;
 import com.casestudy.model.User;
 import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,21 +36,31 @@ public class CreditService {
     private final UserRepository userRepository;
     private final CreditRepository creditRepository;
     private final InstallmentRepository installmentRepository;
+    private List<Installment> installments;
+    private Credit savedCredit;
+
+    private static final Logger logger = LoggerFactory.getLogger(CreditService.class);
+    private User user;
+
 
     public CreditResponseDto createCredit(CreditRequestDto creditRequest) {
 
-        User user = userRepository.findById(Long.valueOf(creditRequest.getUserId()))
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        if (userRepository.findById(Long.valueOf(creditRequest.getUserId())).isPresent()) {
+            User user = userRepository.findById(Long.valueOf(creditRequest.getUserId())).get();
 
-        Credit credit = new Credit();
-        credit.setStatus(CreditStatus.ACTIVE.ordinal());
-        credit.setAmount(creditRequest.getAmount());
-        credit.setUser(user);
 
-        Credit savedCredit = creditRepository.save(credit);
+            Credit credit = new Credit();
+            credit.setStatus(CreditStatus.ACTIVE.ordinal());
+            credit.setAmount(creditRequest.getAmount());
+            credit.setUser(user);
 
-        List<Installment> installments = generateInstallments(savedCredit, creditRequest.getInstallmentCount());
+            savedCredit = creditRepository.save(credit);
 
+            installments = generateInstallments(savedCredit, creditRequest.getInstallmentCount());
+        } else {
+            logger.atError().log("User not found");
+            throw new UserNotFoundException("User not found");
+        }
         return buildCreditResponse(savedCredit, installments);
     }
 
@@ -95,12 +108,12 @@ public class CreditService {
         CreditResponseDto response = new CreditResponseDto();
         response.setCreditId(credit.getId());
 
-        mapInstallments(response, installments);
+        mapInstallments(credit,response, installments);
 
         return response;
     }
 
-    private void mapInstallments(CreditResponseDto responseDto, List<Installment> installments) {
+    private void mapInstallments(Credit credit,CreditResponseDto responseDto, List<Installment> installments) {
         List<InstallmentResponse> installmentResponses = new ArrayList<>();
 
         for (Installment installment : installments) {
@@ -113,12 +126,25 @@ public class CreditService {
 
             installmentResponses.add(installmentResponse);
         }
+        responseDto.setStatus(credit.getStatus() == 1 ? "ACTIVE" : "CLOSED");
+        responseDto.setAmount(BigDecimal.valueOf(savedCredit.getAmount().longValue()));
         responseDto.setInstallments(installmentResponses);
     }
-
+    @Cacheable("myCache")
     public List<CreditResponseDto> listCredits(Integer userId) {
-        User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(() -> new UserNotFoundException("User not found"));
+       if(userRepository.findById(Long.valueOf(userId)).isPresent()){
+           user = userRepository.findById(Long.valueOf(userId)).get();
+        } else {
+            logger.atError().log("User not found");
+            throw new UserNotFoundException("User not found");
+       }
         Optional<List<Credit>> credits = creditRepository.findByUserId(user.getId());
+
+        if (credits.isEmpty()) {
+            logger.atError().log("Credit not found");
+            throw new CreditNotFoundException("Credit not found");
+        }
+
         return mapCreditsToCreditResponseDtos(credits.get());
     }
 

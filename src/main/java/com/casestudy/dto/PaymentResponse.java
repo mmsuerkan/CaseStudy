@@ -1,4 +1,4 @@
-package com.casestudy.service;
+package com.casestudy.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
