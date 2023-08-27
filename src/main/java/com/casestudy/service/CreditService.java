@@ -18,6 +18,7 @@ import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -126,7 +127,7 @@ public class CreditService {
         }
         responseDto.setInstallments(installmentResponses);
     }
-
+    @Cacheable("myCache")
     public List<CreditResponseDto> listCredits(Integer userId) {
         User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(() -> new UserNotFoundException("User not found"));
         Optional<List<Credit>> credits = creditRepository.findByUserId(user.getId());
