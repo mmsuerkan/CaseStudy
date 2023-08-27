@@ -42,6 +42,7 @@ public class CreditService {
         Credit credit = new Credit();
         credit.setStatus(CreditStatus.ACTIVE.ordinal());
         credit.setAmount(creditRequest.getAmount());
+        credit.setCreatedAt(LocalDate.now());
         credit.setUser(user);
 
         Credit savedCredit = creditRepository.save(credit);
@@ -94,6 +95,8 @@ public class CreditService {
     private CreditResponseDto buildCreditResponse(Credit credit, List<Installment> installments) {
         CreditResponseDto response = new CreditResponseDto();
         response.setCreditId(credit.getId());
+        response.setStatus(CreditStatus.ACTIVE.name());
+        response.setAmount(credit.getAmount());
 
         mapInstallments(response, installments);
 
@@ -127,12 +130,18 @@ public class CreditService {
         for (Credit credit : credits) {
             CreditResponseDto responseDto = new CreditResponseDto();
             responseDto.setCreditId(credit.getId());
-            responseDto.setStatus(credit.getStatus() == 1 ? "ACTIVE" : "CLOSED");
             responseDto.setAmount(credit.getAmount());
             responseDto.setInstallments(mapInstallmentsToInstallmentResponses(credit.getInstallments()));
+            responseDto.setStatus(checkIsCreditClosed(credit) ? "ACTIVE" : "CLOSED");
             responseDtos.add(responseDto);
         }
         return responseDtos;
+    }
+
+    private boolean checkIsCreditClosed(Credit credit) {
+
+        //set all credit to 0
+        return credit.getInstallments().stream().allMatch(installment -> installment.getStatus() == 1);
     }
 
     private List<InstallmentResponse> mapInstallmentsToInstallmentResponses(List<Installment> installments) {

@@ -1,16 +1,15 @@
 package com.casestudy.service;
 
-import com.casestudy.exception.FirstAndLastNameNotEmptyException;
-import com.casestudy.exception.UserAlreadyExistException;
-import com.casestudy.repository.UserRepository;
 import com.casestudy.dto.user.UserRequestDto;
 import com.casestudy.dto.user.UserResponseDto;
+import com.casestudy.exception.FirstAndLastNameNotEmptyException;
+import com.casestudy.exception.UserAlreadyExistException;
 import com.casestudy.model.User;
+import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +32,8 @@ public class UserService {
         newUser.setFirstName(userRequestDto.getFirstName());
         newUser.setLastName(userRequestDto.getLastName());
 
-        LocalDateTime now = LocalDateTime.now();
-        newUser.setCreatedAt(Timestamp.valueOf(now));
+
+        newUser.setCreatedAt(LocalDate.now());
 
         User savedUser = userRepository.save(newUser);
 
@@ -47,7 +46,7 @@ public class UserService {
         responseDto.setId(Long.valueOf(user.getId()));
         responseDto.setFirstName(user.getFirstName());
         responseDto.setLastName(user.getLastName());
-        responseDto.setCreatedAt(user.getCreatedAt().toLocalDateTime());
+        responseDto.setCreatedAt(user.getCreatedAt());
 
         return responseDto;
     }

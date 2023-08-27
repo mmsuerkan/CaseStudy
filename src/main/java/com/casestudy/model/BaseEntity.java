@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Timestamp;
+import java.time.LocalDate;
 
 @MappedSuperclass
 @Getter
@@ -15,9 +15,9 @@ public abstract class BaseEntity {
     private Integer id;
 
     @Column(name = "createdAt")
-    private Timestamp createdAt;
+    private LocalDate createdAt;
 
     @Column(name = "updatedAt")
-    private Timestamp updatedAt;
+    private LocalDate updatedAt;
 
 }
