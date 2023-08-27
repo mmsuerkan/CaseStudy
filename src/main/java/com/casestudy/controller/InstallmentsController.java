@@ -3,7 +3,7 @@ package com.casestudy.controller;
 import com.casestudy.dto.installment.PayInstallmentRequest;
 import com.casestudy.exception.AmountLessThanInstallmentException;
 import com.casestudy.service.InstallmentService;
-import com.casestudy.service.PaymentResponse;
+import com.casestudy.dto.PaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

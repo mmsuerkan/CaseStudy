@@ -16,6 +16,8 @@ import com.casestudy.model.Installment;
 import com.casestudy.model.User;
 import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,16 +36,22 @@ public class CreditService {
     private final CreditRepository creditRepository;
     private final InstallmentRepository installmentRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(CreditService.class);
+
     public CreditResponseDto createCredit(CreditRequestDto creditRequest) {
 
-        User user = userRepository.findById(Long.valueOf(creditRequest.getUserId()))
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        Optional<User> user = userRepository.findById(Long.valueOf(creditRequest.getUserId()));
+
+        if(user.isEmpty()){
+            logger.atError().log("User not found");
+            throw new UserNotFoundException("User not found");
+        }
 
         Credit credit = new Credit();
         credit.setStatus(CreditStatus.ACTIVE.ordinal());
         credit.setAmount(creditRequest.getAmount());
         credit.setCreatedAt(LocalDate.now());
-        credit.setUser(user);
+        credit.setUser(user.get());
 
         Credit savedCredit = creditRepository.save(credit);
 

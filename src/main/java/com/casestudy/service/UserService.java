@@ -7,6 +7,8 @@ import com.casestudy.exception.UserAlreadyExistException;
 import com.casestudy.model.User;
 import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,15 +18,18 @@ import java.time.LocalDate;
 public class UserService {
 
     private final UserRepository userRepository;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public UserResponseDto createUser(UserRequestDto userRequestDto) throws FirstAndLastNameNotEmptyException, UserAlreadyExistException {
 
         if(userRequestDto.getFirstName().isEmpty() || userRequestDto.getLastName().isEmpty()) {
+            logger.atError().log("First name and last name cannot be empty");
             throw new FirstAndLastNameNotEmptyException("First name and last name cannot be empty");
         }
 
         //user already exists
         if(userRepository.findByFirstNameAndLastName(userRequestDto.getFirstName(), userRequestDto.getLastName()).isPresent()) {
+            logger.atError().log("First name and last name cannot be empty");
             throw new UserAlreadyExistException("User already exists");
         }
 

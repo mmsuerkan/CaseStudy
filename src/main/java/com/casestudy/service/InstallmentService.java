@@ -1,5 +1,6 @@
 package com.casestudy.service;
 
+import com.casestudy.dto.PaymentResponse;
 import com.casestudy.dto.installment.PayInstallmentRequest;
 import com.casestudy.enums.InstallmentStatus;
 import com.casestudy.exception.*;
@@ -10,6 +11,8 @@ import com.casestudy.repository.CreditRepository;
 import com.casestudy.repository.InstallmentRepository;
 import com.casestudy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,6 +26,7 @@ public class InstallmentService {
     private final CreditRepository creditRepository;
     private final InstallmentRepository installmentRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(InstallmentService.class);
     public PaymentResponse payInstallment(PayInstallmentRequest request) throws AmountLessThanInstallmentException {
         User user = userRepository.findById(request.getUserId().longValue())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -34,9 +38,11 @@ public class InstallmentService {
                 .orElseThrow(() -> new InstallmentNotFoundException("Installment not found"));
 
         if (installment.getStatus() != InstallmentStatus.ACTIVE.ordinal()) {
+            logger.error("Installment has already been paid");
             throw new InstallmentAlreadyPaidException("Installment has already been paid");
         }
         if(request.getAmount().compareTo(installment.getAmount().longValue()) < 0){
+            logger.error("Amount is less than installment amount");
             throw new AmountLessThanInstallmentException("Amount is less than installment amount");
         }
 
