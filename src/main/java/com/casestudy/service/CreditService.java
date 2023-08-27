@@ -5,9 +5,6 @@ import com.casestudy.dto.credit.CreditResponseDto;
 import com.casestudy.dto.installment.InstallmentResponse;
 import com.casestudy.enums.CreditStatus;
 import com.casestudy.enums.InstallmentStatus;
-import com.casestudy.exception.CreditNotFoundException;
-import com.casestudy.exception.InstallmentAlreadyPaidException;
-import com.casestudy.exception.InstallmentNotFoundException;
 import com.casestudy.repository.CreditRepository;
 import com.casestudy.repository.InstallmentRepository;
 import com.casestudy.exception.UserNotFoundException;
@@ -131,7 +128,19 @@ public class CreditService {
     public List<CreditResponseDto> listCredits(Integer userId) {
         User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(() -> new UserNotFoundException("User not found"));
         Optional<List<Credit>> credits = creditRepository.findByUserId(user.getId());
+
+        checkAllCreditsIfClosed(credits);
+
         return mapCreditsToCreditResponseDtos(credits.get());
+    }
+
+    private void checkAllCreditsIfClosed(Optional<List<Credit>> credits) {
+        for (int i = 0; i < credits.get().size(); i++) {
+            if (checkIsCreditClosed(credits.get().get(i))) {
+                credits.get().get(i).setStatus(CreditStatus.CLOSED.ordinal());
+                creditRepository.save(credits.get().get(i));
+            }
+        }
     }
 
     private List<CreditResponseDto> mapCreditsToCreditResponseDtos(List<Credit> credits) {
@@ -168,5 +177,18 @@ public class CreditService {
 
     public List<Credit> findAllCredits() {
         return creditRepository.findAll();
+    }
+
+    public List<CreditResponseDto> listFilteredAndPaginatedCredits(String status, LocalDate date) {
+
+        if(status.equals("ACTIVE"))
+            status = "0";
+        else if(status.equals("CLOSED"))
+            status = "1";
+        else
+            status = null;
+
+        Integer statusInt = Integer.valueOf(status == null ? "1" : status);
+        return mapCreditsToCreditResponseDtos(creditRepository.findByStatusAndCreatedAtGreaterThanEqual(statusInt, date));
     }
 }

@@ -2,6 +2,7 @@ package com.casestudy.service;
 
 import com.casestudy.dto.PaymentResponse;
 import com.casestudy.dto.installment.PayInstallmentRequest;
+import com.casestudy.enums.CreditStatus;
 import com.casestudy.enums.InstallmentStatus;
 import com.casestudy.exception.*;
 import com.casestudy.model.Credit;
@@ -20,6 +21,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -56,6 +58,7 @@ public class InstallmentService {
         credit.setAmount(credit.getAmount().subtract(BigDecimal.valueOf(installment.getAmount().longValue())));
         creditRepository.save(credit);
 
+        checkAllCreditsIfClosed(creditRepository.findByUserId(user.getId().intValue()));
 
         return new PaymentResponse(
                 credit.getId().longValue(),
@@ -64,7 +67,20 @@ public class InstallmentService {
                 installment.getStatus() == 0 ? "PAID" : "NOT PAID"
         );
     }
+    private void checkAllCreditsIfClosed(Optional<List<Credit>> credits) {
+        for (int i = 0; i < credits.get().size(); i++) {
+            if (checkIsCreditClosed(credits.get().get(i))) {
+                credits.get().get(i).setStatus(CreditStatus.CLOSED.ordinal());
+                creditRepository.save(credits.get().get(i));
+            }
+        }
+    }
 
+    private boolean checkIsCreditClosed(Credit credit) {
+
+        //set all credit to 0
+        return credit.getInstallments().stream().allMatch(installment -> installment.getStatus() == 1);
+    }
     public List<Installment> findAllByCreditId(Long creditId) {
         return installmentRepository.findByCreditId(creditId.intValue());
     }
