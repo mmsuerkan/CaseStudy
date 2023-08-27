@@ -166,4 +166,7 @@ public class CreditService {
         return installmentResponses;
     }
 
+    public List<Credit> findAllCredits() {
+        return creditRepository.findAll();
+    }
 }

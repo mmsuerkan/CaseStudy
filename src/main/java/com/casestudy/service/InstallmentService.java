@@ -16,6 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 
 @Service
@@ -59,5 +63,28 @@ public class InstallmentService {
                 installment.getId().longValue(),
                 installment.getStatus() == 0 ? "PAID" : "NOT PAID"
         );
+    }
+
+    public List<Installment> findAllByCreditId(Long creditId) {
+        return installmentRepository.findByCreditId(creditId.intValue());
+    }
+
+    public void calculateLatePaymentInterest(Installment installment,Double rate) {
+        if (installment.getStatus() == InstallmentStatus.ACTIVE.ordinal()) {
+            LocalDate currentDate = LocalDate.now();
+            if (installment.getDueDate().isBefore(currentDate)) {
+                long daysLate = ChronoUnit.DAYS.between(installment.getDueDate(), currentDate);
+                BigDecimal interestRate = BigDecimal.valueOf(rate); // Faiz oranı: %2
+                BigDecimal amount = installment.getAmount();
+
+                BigDecimal latePaymentInterest = amount.multiply(interestRate)
+                        .multiply(BigDecimal.valueOf(daysLate))
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                        .divide(BigDecimal.valueOf(360), 2, RoundingMode.HALF_UP);
+
+                installment.setAmount(amount.add(latePaymentInterest));
+                installmentRepository.save(installment);
+            }
+        }
     }
 }
