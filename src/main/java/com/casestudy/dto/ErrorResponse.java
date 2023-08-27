@@ -1,4 +1,4 @@
-package com.casestudy.exception;
+package com.casestudy.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
