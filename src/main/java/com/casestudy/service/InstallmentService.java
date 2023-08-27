@@ -83,6 +83,7 @@ public class InstallmentService {
                         .divide(BigDecimal.valueOf(360), 2, RoundingMode.HALF_UP);
 
                 installment.setAmount(amount.add(latePaymentInterest));
+                logger.info(new StringBuilder().append("Late payment interest calculated for installment id: ").append(installment.getId()).append(" amount: ").append(latePaymentInterest).append(" days late: ").append(daysLate).append(" +with interest rate: ").append(interestRate).toString());
                 installmentRepository.save(installment);
             }
         }

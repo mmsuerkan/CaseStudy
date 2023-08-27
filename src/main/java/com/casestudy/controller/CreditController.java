@@ -26,4 +26,6 @@ public class CreditController {
         List<CreditResponseDto> responseDto = creditService.listCredits(userId);
         return ResponseEntity.ok(responseDto);
     }
+
+
 }
