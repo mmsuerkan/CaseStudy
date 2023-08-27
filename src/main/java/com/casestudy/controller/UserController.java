@@ -2,8 +2,8 @@ package com.casestudy.controller;
 
 import com.casestudy.dto.user.UserRequestDto;
 import com.casestudy.dto.user.UserResponseDto;
-import com.casestudy.service.FirstAndLastNameNotEmptyException;
-import com.casestudy.service.UserAlreadyExistException;
+import com.casestudy.exception.FirstAndLastNameNotEmptyException;
+import com.casestudy.exception.UserAlreadyExistException;
 import com.casestudy.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

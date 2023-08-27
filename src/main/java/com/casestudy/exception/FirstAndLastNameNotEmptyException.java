@@ -1,4 +1,4 @@
-package com.casestudy.service;
+package com.casestudy.exception;
 
 public class FirstAndLastNameNotEmptyException extends Throwable {
     public FirstAndLastNameNotEmptyException(String message) {

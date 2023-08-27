@@ -1,5 +1,7 @@
 package com.casestudy.service;
 
+import com.casestudy.exception.FirstAndLastNameNotEmptyException;
+import com.casestudy.exception.UserAlreadyExistException;
 import com.casestudy.repository.UserRepository;
 import com.casestudy.dto.user.UserRequestDto;
 import com.casestudy.dto.user.UserResponseDto;
